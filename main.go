@@ -4,7 +4,7 @@ import (
   "fmt"
   "net/http"
 
-  _ "./auth"
+  _ "ic_server/auth"
 )
 
 

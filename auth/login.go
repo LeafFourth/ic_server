@@ -6,7 +6,7 @@ import (
   "os"
   "net/http"
 
-  "../defines"
+  "ic_server/defines"
 )
 
 func authLogin(name string, pw string) (string, string) {
