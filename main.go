@@ -2,16 +2,11 @@ package main
 
 import (
   "fmt"
-  "net/http"
-
   _ "ic_server/auth"
+  "ic_server/services"
 )
-
 
 func main() {
   fmt.Println("main()");
-  err := http.ListenAndServe(":9090", nil);
-  if err != nil {
-    fmt.Println("connnect error:", err);
-  }
+  services.SetupServices();
 }

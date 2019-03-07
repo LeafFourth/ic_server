@@ -1,29 +1,18 @@
-import net
+package live
 
-func SetuoServer() {
-	bus, err : = net.Listen("tcp", ":80880");
-	
-	if err != nil {
-		return;
-	}
-	
-	
-	for  {
-		conn, err := bus.Accept();
-		if err != nil {
-			// handle error
-			continue;
-		}
-		go handleConnection(conn);
-	
-	}
-}
+import "fmt"
+import "net"
 
-func handleConnection(conn Conn) {
-  data := make([]byte, 2);
-  n, err := Println(conn.Read(data));
-  if err != nil {
-    return;
+
+func HandleConnect(conn net.Conn) {
+  data := make([]byte, 512);
+  
+  for {
+    n, err := conn.Read(data);
+    if err != nil {
+      fmt.Println(err);
+      return;
+    }
+    fmt.Println(data[:n]);
   }
-  Println(data[:n]);
 }
