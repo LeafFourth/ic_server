@@ -32,18 +32,11 @@ func setupLiveTcpService(wg *sync.WaitGroup) {
 	bus, err := net.Listen("tcp", ":8033");
 	
 	if err != nil {
+		fmt.Println(err);
 		return;
 	}
-	
-	for  {
-		conn, err := bus.Accept();
-		if err != nil {
-			fmt.Println(err);
-			continue;
-		}	
 
-		go live.HandleConnect(conn);
-	}
+	live.SetupServer(bus);
 	
   wg.Done();
 }
