@@ -1,11 +1,18 @@
 package live
 
 import "fmt"
-import "github.com/gwuhaolin/livego/protocol/rtmp"
 import "net"
 
+import "github.com/gwuhaolin/livego/protocol/rtmp"
+import "github.com/gwuhaolin/livego/configure"
+
+import "ic_server/defines"
+
 func SetupServer(ln net.Listener) {
-  rtmp.NewRtmpServer(ln).Start();
+  err := configure.LoadConfig(defines.ResRoot + "live/configure.json");
+  if nil != err {
+    fmt.Println(err);
+  }
 
-
+  rtmp.NewRtmpServer(rtmp.NewRtmpStream(), nil).Serve(ln);
 }
