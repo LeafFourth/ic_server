@@ -10,7 +10,8 @@ func initAuthRouter() {
   http.HandleFunc("/auth", login)
 }
 
-func init() {
+func InitModule() {
   fmt.Println("init auth");
+  initAuthRouter();
   initDBConnect();
 }

@@ -1,10 +1,12 @@
 package services
 
-import "ic_server/live"
 import "fmt"
 import "net"
 import "net/http"
 import "sync"
+
+import "ic_server/auth"
+import "ic_server/live"
 
 func SetupServices() {
 	var wg sync.WaitGroup;
@@ -17,6 +19,8 @@ func SetupServices() {
 
 func setupHttpService(wg *sync.WaitGroup) {
   fmt.Println("setup http server");
+
+  auth.InitModule();
 	
 	err := http.ListenAndServe(":9090", nil);
   if err != nil {
