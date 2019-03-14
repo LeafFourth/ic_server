@@ -1,7 +1,9 @@
 package auth
 
 import (
+  "context"
   "crypto/md5"
+  "database/sql"
   "encoding/hex"
   "fmt"
   "io/ioutil"
@@ -64,12 +66,58 @@ func readLoginPage() ([]byte, error) {
 func loginPage(w http.ResponseWriter, r *http.Request) {
   b, err := readLoginPage();
   if err != nil {
-    fmt.Println(nil);
-    w.WriteHeader(202);
+    fmt.Println(err);
+    w.WriteHeader(404);
+    w.Write([]byte(""));
     return;
   }
 
   w.Write(b);
+}
+
+func updateUserToken(token string, uid uint) (string) {
+  tx, err := auth_conn.BeginTx(context.Background(), &sql.TxOptions{Isolation: sql.LevelSerializable});
+  if err != nil {
+    fmt.Println(err);
+    return "db error";
+  }
+
+  rows, err := tx.Query("select uid from user_tokens where uid=?", uid);
+  if err != nil {
+    fmt.Println(err);
+    return "db error";
+  }
+  defer rows.Close();
+
+  if (rows.Next())  {
+    rows2, err := tx.Query("UPDATE user_tokens SET token=", token);
+    if err != nil {
+      fmt.Println(err);
+      return "db error";
+    }
+
+    defer rows2.Close();
+  } else {
+    rows3, err := tx.Query("INSERT INTO user_tokens(uid, token) VALUES(?, ?)", uid, token);
+    if err != nil {
+      fmt.Println(err);
+      return "db error";
+    }
+
+    defer rows3.Close();
+  }
+
+  if (rows.Next()) {
+    fmt.Println("db err, multi records");
+  }
+  
+  err = tx.Commit();
+  if err != nil {
+    fmt.Println(err);
+    return "db error";
+  }
+
+  return "";
 }
 
 func login(w http.ResponseWriter, r *http.Request) {
@@ -97,9 +145,9 @@ func login(w http.ResponseWriter, r *http.Request) {
     return;
   }
 
-  _, err2 := auth_conn.Query("UPDATE user_tokens SET token = ? WHERE uid = ?", token, uid);
-  if err2 != nil {
-    fmt.Println(err2);
+  err = updateUserToken(token, uid);
+  if len(err) != 0 {
+    fmt.Println(err);
     w.WriteHeader(500 );
     w.Write([]byte("mysql err"));
     return;
