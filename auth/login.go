@@ -21,18 +21,20 @@ func authLogin(name string, pw string) (uint, string) {
     return 0, "no conn";
   }
 
-  if len(name) <= 0 {
+  if len(name) <= 0 || len(pw) <= 0 {
     return 0, "argue err";
   }
   if len(pw) <= 0 {
     return 0, "argue err";
   }
 
-  rows, err := auth_conn.Query("select uid, password from users where name=?", name);
+  rows, err := auth_conn.Query("select uid, password from users where name=?;", name);
   if err != nil {
+    fmt.Println("query uid error");
     fmt.Println(err);
     return 0, "db error";
   }
+  auth_conn.Exec("COMMIT;");
 
   defer rows.Close();
 
@@ -76,47 +78,48 @@ func loginPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateUserToken(token string, uid uint) (string) {
+  //return "";
   tx, err := auth_conn.BeginTx(context.Background(), &sql.TxOptions{Isolation: sql.LevelSerializable});
   if err != nil {
     fmt.Println(err);
     return "db error";
   }
+  defer tx.Commit();
+  fmt.Println("begin");
 
-  rows, err := tx.Query("select uid from user_tokens where uid=?", uid);
+  rows, err := tx.Query("select uid from user_tokens where uid=?;", uid);
   if err != nil {
     fmt.Println(err);
     return "db error";
   }
   defer rows.Close();
+  fmt.Println("find uid succ");
 
   if (rows.Next())  {
-    rows2, err := tx.Query("UPDATE user_tokens SET token=", token);
+    fmt.Println("need update");
+    rows2, err := tx.Query("UPDATE user_tokens SET token=? WHERE uid=?;", token, uid);
     if err != nil {
       fmt.Println(err);
       return "db error";
     }
-
     defer rows2.Close();
+
+    fmt.Println("update succ");
   } else {
-    rows3, err := tx.Query("INSERT INTO user_tokens(uid, token) VALUES(?, ?)", uid, token);
+    fmt.Println("need insert");
+    rows3, err := tx.Query("INSERT INTO user_tokens(uid, token) VALUES(?, ?);", uid, token);
     if err != nil {
       fmt.Println(err);
       return "db error";
     }
-
     defer rows3.Close();
+
+    fmt.Println("insert succ");
   }
 
   if (rows.Next()) {
     fmt.Println("db err, multi records");
   }
-  
-  err = tx.Commit();
-  if err != nil {
-    fmt.Println(err);
-    return "db error";
-  }
-
   return "";
 }
 
@@ -126,11 +129,12 @@ func login(w http.ResponseWriter, r *http.Request) {
   fmt.Println("login", r.Form["username"][0], r.Form["password"][0]);
   uid, err := authLogin(r.Form["username"][0], r.Form["password"][0]);
 
-  if len(err) > 0 {
+  if uid == 0 {
     w.WriteHeader(401);
     w.Write([]byte(err));
     return;
   }
+  fmt.Println("get uid:", uid);
 
   token := genToken(uid);
   if len(token) == 0 {
@@ -138,6 +142,7 @@ func login(w http.ResponseWriter, r *http.Request) {
     w.Write([]byte("fatal error"));
     return;
   }
+  fmt.Println("get token:", token);
 
   if auth_conn == nil {
     w.WriteHeader(500 );

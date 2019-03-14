@@ -16,6 +16,7 @@ func initDBConnect() {
       fmt.Println(err);
       return;
   }
+  auth_conn.Exec("SET AUTOCOMMIT=0;");
   fmt.Println(auth_conn);
 }
 
