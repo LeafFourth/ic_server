@@ -79,23 +79,33 @@ func login(w http.ResponseWriter, r *http.Request) {
   uid, err := authLogin(r.Form["username"][0], r.Form["password"][0]);
 
   if len(err) > 0 {
-    w.WriteHeader(400);
+    w.WriteHeader(401);
     w.Write([]byte(err));
     return;
   }
 
   token := genToken(uid);
   if len(token) == 0 {
-    w.WriteHeader(400);
+    w.WriteHeader(500);
     w.Write([]byte("fatal error"));
     return;
   }
 
   if auth_conn == nil {
-    w.WriteHeader(400);
+    w.WriteHeader(500 );
     w.Write([]byte("mysql err"));
     return;
   }
+
+  _, err2 := auth_conn.Query("UPDATE user_tokens SET token = ? WHERE uid = ?", token, uid);
+  if err2 != nil {
+    fmt.Println(err2);
+    w.WriteHeader(500 );
+    w.Write([]byte("mysql err"));
+    return;
+  }
+
+  w.Write([]byte(token));
 }
 
 func genToken(uid uint) string {
