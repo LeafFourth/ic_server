@@ -84,7 +84,6 @@ func updateUserToken(token string, uid uint) (string) {
     fmt.Println(err);
     return "db error";
   }
-  defer tx.Commit();
   fmt.Println("begin");
 
   rows, err := tx.Query("select uid from user_tokens where uid=?;", uid);
@@ -92,11 +91,14 @@ func updateUserToken(token string, uid uint) (string) {
     fmt.Println(err);
     return "db error";
   }
-  defer rows.Close();
   fmt.Println("find uid succ");
 
   if (rows.Next())  {
     fmt.Println("need update");
+    if rows.Next() {
+      fmt.Println("db err, multi records");
+    }
+    rows.Close();  
     rows2, err := tx.Query("UPDATE user_tokens SET token=? WHERE uid=?;", token, uid);
     if err != nil {
       fmt.Println(err);
@@ -106,6 +108,7 @@ func updateUserToken(token string, uid uint) (string) {
 
     fmt.Println("update succ");
   } else {
+    rows.Close();  
     fmt.Println("need insert");
     rows3, err := tx.Query("INSERT INTO user_tokens(uid, token) VALUES(?, ?);", uid, token);
     if err != nil {
@@ -117,9 +120,11 @@ func updateUserToken(token string, uid uint) (string) {
     fmt.Println("insert succ");
   }
 
-  if (rows.Next()) {
-    fmt.Println("db err, multi records");
+  if err3 := tx.Commit();err3 != nil {
+    return "db error"
   }
+  fmt.Println("update token succ");
+
   return "";
 }
 
