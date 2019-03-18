@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+  <script type="text/javascript" src="../common/requireJS/require.js"></script>
+  <script type="text/javascript">
+    const depsModules = [
+      "../common/jQuery/jquery-3.3.1.min.js",
+      "../common/vue/vue.js",
+      "../live/build_list.js"
+    ];
+  </script>
+
+  <head><title>all lives</title></head>
+  <body>
+    <div id="title">
+      <h1>list</h1>
+      <script type="text/javascript">
+        "use strict"
+
+        require(depsModules, function() {
+          console.log("after build all lists");
+        });
+      </script>
+      <button id="test" type="button" onclick="f()"> click me!</button>
+    </div>
+  </body>
+</html>

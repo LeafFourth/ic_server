@@ -5,6 +5,7 @@ import (
   "crypto/md5"
   "database/sql"
   "encoding/hex"
+  "errors"
   "fmt"
   "io/ioutil"
   "net/http"
@@ -13,10 +14,11 @@ import (
   "time"
 
   "ic_server/defines"
+  "ic_server/services/db_connect"
 )
 
 func authLogin(name string, pw string) (uint, string) {
-  if auth_conn == nil {
+  if db_connect.ServerDB == nil {
     fmt.Println("no conn");
     return 0, "no conn";
   }
@@ -28,13 +30,13 @@ func authLogin(name string, pw string) (uint, string) {
     return 0, "argue err";
   }
 
-  rows, err := auth_conn.Query("select uid, password from users where name=?;", name);
+  rows, err := db_connect.ServerDB.Query("select uid, password from users where name=?;", name);
   if err != nil {
     fmt.Println("query uid error");
     fmt.Println(err);
     return 0, "db error";
   }
-  auth_conn.Exec("COMMIT;");
+  db_connect.ServerDB.Exec("COMMIT;");
 
   defer rows.Close();
 
@@ -79,7 +81,7 @@ func loginPage(w http.ResponseWriter, r *http.Request) {
 
 func updateUserToken(token string, uid uint) (string) {
   //return "";
-  tx, err := auth_conn.BeginTx(context.Background(), &sql.TxOptions{Isolation: sql.LevelSerializable});
+  tx, err := db_connect.ServerDB.BeginTx(context.Background(), &sql.TxOptions{Isolation: sql.LevelSerializable});
   if err != nil {
     fmt.Println(err);
     return "db error";
@@ -130,7 +132,14 @@ func updateUserToken(token string, uid uint) (string) {
 
 func login(w http.ResponseWriter, r *http.Request) {
   r.ParseForm();
-  //fmt.Println(r);
+  uname := r.Form["username"];
+  pwd := r.Form["password"];
+  if uname == nil || pwd == nil {
+    fmt.Println("args error");
+    w.WriteHeader(500 );
+    w.Write([]byte("args err"));
+    return;
+  }
   fmt.Println("login", r.Form["username"][0], r.Form["password"][0]);
   uid, err := authLogin(r.Form["username"][0], r.Form["password"][0]);
 
@@ -149,7 +158,7 @@ func login(w http.ResponseWriter, r *http.Request) {
   }
   fmt.Println("get token:", token);
 
-  if auth_conn == nil {
+  if db_connect.ServerDB == nil {
     w.WriteHeader(500 );
     w.Write([]byte("mysql err"));
     return;
@@ -177,4 +186,25 @@ func genToken(uid uint) string {
   h := md5.New();
   h.Write([]byte(oriKey + "_" + timeStr));
   return hex.EncodeToString(h.Sum(nil));
+}
+
+func CheckToken(token string) (uint, error) {
+  if len(token) == 0 {
+    return 0, errors.New("emptr token");
+  }
+
+  rows, err := db_connect.ServerDB.Query("select uid from user_tokens where token=?", token);
+  if (err != nil) {
+    return 0, errors.New("db error");
+  }
+
+  defer rows.Close();
+
+  if !rows.Next() {
+    return 0, errors.New("token error");
+  }
+
+  var uid uint = 0;
+  rows.Scan(&uid);
+  return uid, nil;
 }

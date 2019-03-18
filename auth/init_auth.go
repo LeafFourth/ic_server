@@ -6,12 +6,11 @@ import (
 )
 
 func initAuthRouter() {
-  http.HandleFunc("/login.html", loginPage);
-  http.HandleFunc("/auth", login)
+  http.HandleFunc("/auth/login.html", loginPage);
+  http.HandleFunc("/auth/verify", login)
 }
 
 func InitModule() {
   fmt.Println("init auth");
   initAuthRouter();
-  initDBConnect();
 }
