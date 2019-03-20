@@ -7,6 +7,8 @@ import (
 
 func initLiveRouter() {
   http.HandleFunc("/live/livelist", getLiveList);
+  http.HandleFunc("/live/requireRoom", requireLiveRoom);
+  http.HandleFunc("/live/requireRoom.html", requireLiveRoomPage);
 }
 
 

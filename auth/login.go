@@ -7,14 +7,12 @@ import (
   "encoding/hex"
   "errors"
   "fmt"
-  "io/ioutil"
   "net/http"
-  "os"
   "strconv"
   "time"
 
-  "ic_server/defines"
   "ic_server/services/db_connect"
+  "ic_server/common"
 )
 
 func authLogin(name string, pw string) (uint, string) {
@@ -54,24 +52,11 @@ func authLogin(name string, pw string) (uint, string) {
   return uid, "";
 }
 
-
-func readLoginPage() ([]byte, error) {
-  path := defines.ResRoot;
-  path += "auth/login.html"
-  f, err := os.Open(path);
-  if err != nil {
-    fmt.Println(err);
-    return nil, err;
-  }
-
-  return ioutil.ReadAll(f);
-}
-
 func loginPage(w http.ResponseWriter, r *http.Request) {
-  b, err := readLoginPage();
+  b, err := common.ReadPage("auth/login.html");
   if err != nil {
     fmt.Println(err);
-    w.WriteHeader(404);
+    w.WriteHeader(http.StatusNotFound);
     w.Write([]byte(""));
     return;
   }
@@ -86,17 +71,14 @@ func updateUserToken(token string, uid uint) (string) {
     fmt.Println(err);
     return "db error";
   }
-  fmt.Println("begin");
 
   rows, err := tx.Query("select uid from user_tokens where uid=?;", uid);
   if err != nil {
     fmt.Println(err);
     return "db error";
   }
-  fmt.Println("find uid succ");
 
   if (rows.Next())  {
-    fmt.Println("need update");
     if rows.Next() {
       fmt.Println("db err, multi records");
     }
@@ -108,7 +90,6 @@ func updateUserToken(token string, uid uint) (string) {
     }
     defer rows2.Close();
 
-    fmt.Println("update succ");
   } else {
     rows.Close();  
     fmt.Println("need insert");
@@ -118,8 +99,6 @@ func updateUserToken(token string, uid uint) (string) {
       return "db error";
     }
     defer rows3.Close();
-
-    fmt.Println("insert succ");
   }
 
   if err3 := tx.Commit();err3 != nil {
@@ -136,7 +115,7 @@ func login(w http.ResponseWriter, r *http.Request) {
   pwd := r.Form["password"];
   if uname == nil || pwd == nil {
     fmt.Println("args error");
-    w.WriteHeader(500 );
+    w.WriteHeader(http.StatusBadRequest );
     w.Write([]byte("args err"));
     return;
   }
@@ -144,7 +123,7 @@ func login(w http.ResponseWriter, r *http.Request) {
   uid, err := authLogin(r.Form["username"][0], r.Form["password"][0]);
 
   if uid == 0 {
-    w.WriteHeader(401);
+    w.WriteHeader(http.StatusUnauthorized);
     w.Write([]byte(err));
     return;
   }
@@ -152,14 +131,14 @@ func login(w http.ResponseWriter, r *http.Request) {
 
   token := genToken(uid);
   if len(token) == 0 {
-    w.WriteHeader(500);
+    w.WriteHeader(http.StatusInternalServerError);
     w.Write([]byte("fatal error"));
     return;
   }
   fmt.Println("get token:", token);
 
   if db_connect.ServerDB == nil {
-    w.WriteHeader(500 );
+    w.WriteHeader(http.StatusInternalServerError );
     w.Write([]byte("mysql err"));
     return;
   }
@@ -167,7 +146,7 @@ func login(w http.ResponseWriter, r *http.Request) {
   err = updateUserToken(token, uid);
   if len(err) != 0 {
     fmt.Println(err);
-    w.WriteHeader(500 );
+    w.WriteHeader(http.StatusInternalServerError );
     w.Write([]byte("mysql err"));
     return;
   }
@@ -207,4 +186,45 @@ func CheckToken(token string) (uint, error) {
   var uid uint = 0;
   rows.Scan(&uid);
   return uid, nil;
+}
+
+func registerPage(w http.ResponseWriter, r *http.Request) {
+  b, err := common.ReadPage("auth/register.html");
+  if err != nil {
+    fmt.Println(err);
+    w.WriteHeader(http.StatusNotFound);
+    w.Write([]byte(""));
+    return;
+  }
+
+  w.Write(b);
+}
+
+func register(w http.ResponseWriter, r *http.Request) {
+  r.ParseForm();
+  name := r.Form["username"];
+  pwd  := r.Form["password"];
+
+  if name == nil || pwd == nil {
+    w.WriteHeader(http.StatusBadRequest);
+    w.Write([]byte(""));
+    return;
+  }
+
+  if len(name[0]) == 0 || len(pwd[0]) == 0 {
+    w.WriteHeader(http.StatusBadRequest);
+    w.Write([]byte(""));
+    return;
+  }
+
+  if _, err := db_connect.ServerDB.Exec("INSERT INTO users(name, password) VALUES(?, ?)", name[0], pwd[0]); err != nil {
+    w.WriteHeader(http.StatusBadRequest);
+    w.Write([]byte(""));
+    return;
+  }
+
+  w.WriteHeader(http.StatusBadRequest);
+    w.WriteHeader(http.StatusOK);
+    w.Write([]byte("success"));
+    return;
 }

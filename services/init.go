@@ -6,6 +6,7 @@ import (
   "net"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 
 	"ic_server/auth"
@@ -35,6 +36,16 @@ func initGlobalRouter() {
 	http.HandleFunc("/", globalHandle);
 }
 
+func handleDefaultPage(w http.ResponseWriter, r *http.Request) bool {
+  if strings.HasSuffix(r.URL.Path, "/") {
+		r.URL.Path += "index.html";
+		http.DefaultServeMux.ServeHTTP(w, r);
+		return true;
+	}
+
+	return false;
+}
+
 func globalHandle(w http.ResponseWriter, r *http.Request) {
 	// r.ParseForm();
 	// token := r.Form["token"];
@@ -53,13 +64,19 @@ func globalHandle(w http.ResponseWriter, r *http.Request) {
 	// }
 
 	fmt.Println("require ", r.URL.Path);
+	if handleDefaultPage(w, r) {
+		return;
+	}
+
+
 
   path := defines.ResRoot + r.URL.Path[1:];
   f, err := os.Open(path);
   if err != nil {
 		fmt.Println(err);
 		w.WriteHeader(404);
-    w.Write([]byte(""));
+		w.Write([]byte(""));
+		return;
 	}
 
 	data, err2 := ioutil.ReadAll(f);
@@ -67,7 +84,8 @@ func globalHandle(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("read err");
 		fmt.Println(err2);
 		w.WriteHeader(404);
-    w.Write([]byte(""));
+		w.Write([]byte(""));
+		return;
 	}
 	
 	w.Write(data);

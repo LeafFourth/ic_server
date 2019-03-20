@@ -8,7 +8,10 @@
 }(window, function (g) { 
   'use strict';
 
-  g.f = function () {
-    console.log("f()");
+  let con = $("#list");
+  for (let i = 0; i < 10; ++i) {
+    con.append($("<span></span>").text("line " + i));
+    con.append($("<br />"));
   }
+  
 }));
