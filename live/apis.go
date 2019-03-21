@@ -45,35 +45,45 @@ func requireLiveRoom(w http.ResponseWriter, r *http.Request) {
     return;
   }
 
-  {
+  
+  var hasEerr = false;
+  for {
     rows, err3 := tx.Query("SELECT rid FROM rooms WHERE uid=?", uid);
     if err3 != nil {
       fmt.Println(err3);
       w.WriteHeader(http.StatusInternalServerError);
       w.Write([]byte("db error"));
-      return;
+      hasEerr = true;
+      break;
     }
-
     if rows.Next() {
       rows.Close();
       w.WriteHeader(http.StatusBadRequest);
       w.Write([]byte("has a room already"));
-      return;
+      hasEerr = true;
+      break;
     }
 
     rows.Close();
-  }
-  {
-    _, err3 := tx.Exec("INSERT INTO rooms(uid, name) VALUES(?, ?)", uid, name2);
-    if err3 != nil {
-      fmt.Println(err3);
-      w.WriteHeader(http.StatusBadRequest);
-      w.Write([]byte("db error"));
-      return;
+    {
+      _, err3 := tx.Exec("INSERT INTO rooms(uid, name) VALUES(?, ?)", uid, name2);
+      if err3 != nil {
+        fmt.Println(err3);
+        w.WriteHeader(http.StatusBadRequest);
+        w.Write([]byte("db error"));
+        hasEerr = true;
+        break;
+      }
     }
+    break;
   }
+
   {
     err3 := tx.Commit();
+    if hasEerr {
+      return;
+    }
+
     if err3 != nil {
       fmt.Println(err);
       w.WriteHeader(http.StatusBadRequest);

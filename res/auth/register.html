@@ -1,11 +1,38 @@
 <!DOCTYPE html>
 <html>
-<title>login</title>
-<body>
-  <form action="/auth/signup" method="post">
-    user:<input type="text" name="username">
-    password:<input type="password" name="password">
-    <input type="submit" value="signup">
-  </form>
-</body>
+  <head>
+    <title>login</title>
+  </head>
+  <script type="text/javascript" src="../common/wcs_cookies.js"></script>
+  <script type="text/javascript" src="../common/jQuery/jquery-3.3.1.min.js"></script>
+  <body>
+    <div id="reg_form">
+      <span>username:</span><input type="text" id="name" />
+      <br />
+      <span>password:</span><input type="text" id="pwd" />
+      <button type="button" id="submit" onclick="submit()">login</button>
+    </div>
+    <script type="text/javascript">
+      function submit()
+      {
+        $.post("signup", 
+          {
+            username:$("#name").val(),
+            password:$("#pwd").val()
+          }
+          ).done(onRegSuccess).fail(onRegFail);
+      }
+
+      function onRegSuccess(data, status)
+      {
+        let tip = "<p>register success</p>";
+        $("#reg_form").html(tip);
+      }
+      function onRegFail(o, status, errT)
+      {
+        let tip = "<p>error:" + o.responseText + "</p>";
+        $("#reg_form").html(tip);
+      }
+    </script>
+  </body>
 </html>

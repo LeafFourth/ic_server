@@ -72,37 +72,55 @@ func updateUserToken(token string, uid uint) (string) {
     return "db error";
   }
 
-  rows, err := tx.Query("select uid from user_tokens where uid=?;", uid);
-  if err != nil {
-    fmt.Println(err);
-    return "db error";
+  hasErr := false;
+  retErr := "";
+  for {
+    rows, err := tx.Query("select uid from user_tokens where uid=?;", uid);
+    if err != nil {
+      fmt.Println(err);
+      retErr = "db error";
+      hasErr = true;
+      break;
+    }
+  
+    if (rows.Next())  {
+      if rows.Next() {
+        fmt.Println("db err, multi records");
+      }
+      rows.Close();
+      rows2, err := tx.Query("UPDATE user_tokens SET token=? WHERE uid=?;", token, uid);
+      if err != nil {
+        fmt.Println(err);
+        retErr = "db error";
+        hasErr = true;
+        break;
+      }
+      rows2.Close();
+  
+    } else {
+      rows.Close();  
+      fmt.Println(4);
+      rows3, err := tx.Query("INSERT INTO user_tokens(uid, token) VALUES(?, ?);", uid, token);
+      if err != nil {
+        fmt.Println(err);
+        retErr = "db error";
+        hasErr = true;
+        break;
+      }
+      rows3.Close();
+    }
+
+    break;
   }
 
-  if (rows.Next())  {
-    if rows.Next() {
-      fmt.Println("db err, multi records");
-    }
-    rows.Close();  
-    rows2, err := tx.Query("UPDATE user_tokens SET token=? WHERE uid=?;", token, uid);
-    if err != nil {
-      fmt.Println(err);
-      return "db error";
-    }
-    defer rows2.Close();
-
-  } else {
-    rows.Close();  
-    fmt.Println("need insert");
-    rows3, err := tx.Query("INSERT INTO user_tokens(uid, token) VALUES(?, ?);", uid, token);
-    if err != nil {
-      fmt.Println(err);
-      return "db error";
-    }
-    defer rows3.Close();
+  if (hasErr) {
+    fmt.Println("transaction error");
+    tx.Rollback();
+    return retErr;
   }
 
   if err3 := tx.Commit();err3 != nil {
-    return "db error"
+    return "db error";
   }
   fmt.Println("update token succ");
 
@@ -207,24 +225,23 @@ func register(w http.ResponseWriter, r *http.Request) {
 
   if name == nil || pwd == nil {
     w.WriteHeader(http.StatusBadRequest);
-    w.Write([]byte(""));
+    w.Write([]byte("args error"));
     return;
   }
 
   if len(name[0]) == 0 || len(pwd[0]) == 0 {
     w.WriteHeader(http.StatusBadRequest);
-    w.Write([]byte(""));
+    w.Write([]byte("args error"));
     return;
   }
 
   if _, err := db_connect.ServerDB.Exec("INSERT INTO users(name, password) VALUES(?, ?)", name[0], pwd[0]); err != nil {
     w.WriteHeader(http.StatusBadRequest);
-    w.Write([]byte(""));
+    w.Write([]byte("user exists!"));
     return;
   }
 
-  w.WriteHeader(http.StatusBadRequest);
-    w.WriteHeader(http.StatusOK);
-    w.Write([]byte("success"));
-    return;
+  w.WriteHeader(http.StatusOK);
+  w.Write([]byte("success"));
+  return;
 }

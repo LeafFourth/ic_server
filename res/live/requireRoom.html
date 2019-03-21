@@ -2,19 +2,35 @@
 <html>
   <head><title>get a room</title></head>
   <script type="text/javascript" src="../common/jQuery/jquery-3.3.1.min.js"> </script>
+  <script type="text/javascript" src="../common/wcs_cookies.js"> </script>
   <body>
-    <form action="/live/requireRoom" method="post" onsubmit="readToken()">
-      room name:<input type="text" name="room_name">
-                <input name="token" id="form1_token" type="hidden" value="123">
-                <input type="submit" value="login">
-    </form>
+    <div id="room_form">
+      <span>room_name:</span><input type="text" id="name" />
+      <br />
+      <button type="button" id="submit" onclick="submit()">require</button>
+    </div>
+    <script type="text/javascript">
+      function submit()
+      {
+        console.log(getCookie("token"));
+        $.post("requireRoom", 
+          {
+            room_name:$("#name").val(),
+            token:getCookie("token")
+          }
+          ).done(onRegSuccess).fail(onRegFail);
+      }
 
-  <script type="text/javascript">
-    function readToken() {
-      console.log(document.getElementById("form1_token"));
-      $("#form1_token").val("29f1ef502f95886e140e69ef8e166cff");
-      console.log(document.getElementById("form1_token"));
-    }
-  </script>
+      function onRegSuccess(data, status)
+      {
+        let tip = "<p>require success</p>";
+        $("#room_form").html(tip);
+      }
+      function onRegFail(o, status, errT)
+      {
+        let tip = "<p>error:" + o.responseText + "</p>";
+        $("#room_form").html(tip);
+      }
+    </script>
   </body>
 </html>

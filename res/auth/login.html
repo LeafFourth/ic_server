@@ -1,11 +1,43 @@
 <!DOCTYPE html>
 <html>
-<title>login</title>
-<body>
-  <form action="/auth/verify" method="post">
-    user:<input type="text" name="username">
-    password:<input type="password" name="password">
-    <input type="submit" value="login">
-  </form>
-</body>
+  <head>
+    <title>login</title>
+  </head>
+  <script type="text/javascript" src="../common/wcs_cookies.js"></script>
+  <script type="text/javascript" src="../common/jQuery/jquery-3.3.1.min.js"></script>
+  <body>
+    <div id="login_form">
+      <span>username:</span><input type="text" id="name" />
+      <br />
+      <span>password:</span><input type="text" id="pwd" />
+      <button type="button" id="submit" onclick="submit()">login</button>
+    </div>
+    <script type="text/javascript">
+      function submit()
+      {
+        console.log(getCookie("token"));
+        //$.ajaxError(onLoginFail);
+        $.post("verify", 
+          {
+            username:$("#name").val(),
+            password:$("#pwd").val()
+          }
+          ).done(onLoginSuccess).fail(onLoginFail);
+      }
+
+      function onLoginSuccess(data, status)
+      {
+        //console.log(data);
+        setCookie("token", data);
+        console.log(getCookie("token"));
+        let tip = "<p>login success</p>";
+        $("#login_form").html(tip);
+      }
+      function onLoginFail(o, status, errT)
+      {
+        let tip = "<p>error:" + o.responseText + "</p>";
+        $("#login_form").html(tip);
+      }
+    </script>
+  </body>
 </html>
