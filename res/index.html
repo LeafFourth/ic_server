@@ -2,6 +2,8 @@
 <html>
 <head>
   <title>home page</title>
+  <script type="text/javascript" src="common/wcs_cookies.js"></script>
+  <script type="text/javascript" src="../common/jQuery/jquery-3.3.1.min.js"></script>
 </head>
 <body>
   <a href="auth/login.html">login page</a>
@@ -9,5 +11,28 @@
   <a href="auth/register.html">register page</a>
   <br />
   <a href="live/requireRoom.html">require room page</a>
+  <br />
+  <button type="button" onclick="getList()">list</button>
+  
+  <script>
+    function getList()
+    {
+      tk = getCookie("token");
+      console.log(tk);
+      $.post("live/livelist", {token: tk}).done(onRegSuccess).fail(onRegFail);
+    }
+
+    function onRegSuccess(data, status)
+    {
+      let tip = "<p>get success</p>";
+      $("#room_form").html(tip);
+      console.log(data);
+    }
+    function onRegFail(o, status, errT)
+    {
+      let tip = "<p>error:" + o.responseText + "</p>";
+      $("#room_form").html(tip);
+    }
+  </script>
 </body>
 </html>

@@ -3,6 +3,7 @@ package live
 import (
   "context"
   "database/sql"
+  "encoding/json"
   "fmt"
   "net/http"
 
@@ -11,7 +12,65 @@ import (
   "ic_server/services/db_connect"
 )
 
+type roomInfo struct {
+  Uname string;
+  Rname string;
+  Rid   int;
+  Uid   uint
+}
+
+type roomsInfo []roomInfo;
+
 func getLiveList(w http.ResponseWriter, r *http.Request) {
+  r.ParseForm();
+  token := r.Form["token"];
+  fmt.Println(token);
+  if token == nil {
+    w.WriteHeader(http.StatusUnauthorized);
+    w.Write([]byte("not login!"));
+
+    return;
+  }
+
+  {
+    _, err := auth.CheckToken(token[0]);
+    if err != nil {
+      fmt.Println(err);
+      w.WriteHeader(http.StatusUnauthorized);
+      w.Write([]byte("not login!"));
+      return;
+    }
+  }
+
+  var infos roomsInfo = make([]roomInfo, 0);
+  {
+    rows, err := db_connect.ServerDB.Query("SELECT rooms.rid, rooms.uid, rooms.name, users.name  FROM rooms, users WHERE rooms.uid = users.uid");
+    if err != nil {
+      fmt.Println(err);
+      w.WriteHeader(http.StatusInternalServerError);
+      w.Write([]byte("db error"));
+      return;
+    }
+
+    
+    for ; rows.Next(); {
+      var info roomInfo;
+      rows.Scan(&info.Rid, &info.Uid, &info.Rname, &info.Uname);
+      infos = append(infos, info);
+    }
+    rows.Close();
+  }
+
+  {
+    var data []byte;
+    data, err := json.Marshal(infos);
+    if err != nil {
+      w.WriteHeader(http.StatusInternalServerError);
+      w.Write([]byte("data error"));
+      return;
+    }
+    w.Write(data);  
+  }
 }
 
 func requireLiveRoom(w http.ResponseWriter, r *http.Request) {
