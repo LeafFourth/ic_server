@@ -15,8 +15,6 @@
     <script type="text/javascript">
       function submit()
       {
-        console.log(getCookie("token"));
-        //$.ajaxError(onLoginFail);
         $.post("verify", 
           {
             username:$("#name").val(),
@@ -27,9 +25,7 @@
 
       function onLoginSuccess(data, status)
       {
-        //console.log(data);
-        setCookie("token", data);
-        console.log(getCookie("token"));
+        setCookie("token", data, 3);
         let tip = "<p>login success</p>";
         $("#login_form").html(tip);
       }

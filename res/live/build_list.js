@@ -1,3 +1,5 @@
+'use strict';
+
 (function (g, factory) {
   if (typeof exports === 'object' && typeof module !== 'undefined') {
     console.log("only support amd require!");
@@ -6,15 +8,15 @@
     factory(g);
   }
 }(window, function (g) { 
-  'use strict';
+  
 
   const depsModules = [
-      "../common/jQuery/jquery-3.3.1.min.js",
-      "../common/vue/vue.js",
-      "../common/wcs_cookies.js"
+      // "../common/jQuery/jquery-3.3.1.min.js",
+      // "../common/vue/vue.js",
+      // "../common/wcs_cookies.js"
   ];
 
-  define(depsModules, function(a, b, c){
+  define(depsModules, function(){
     let tk = getCookie("token");
     console.log(tk);
     $.post("livelist", {token: tk}).done(replySuccess).fail(replyFail);

@@ -1,3 +1,5 @@
+'use strict';
+
 (function (g, factory) {
   if (typeof exports === 'object' && typeof module !== 'undefined') {
     console.log("only support amd require!");
@@ -6,8 +8,6 @@
     factory(g);
   }
 }(window, function (g) { 
-  'use strict';
-  
   function getCookie(c_name)
   {
     if (document.cookie.length>0)
@@ -38,4 +38,10 @@
   
   g.setCookie = setCookie;
   g.getCookie = getCookie;
+  
+  if ( typeof define === "function" && define.amd ) {
+    define("wcs_cookies", [], function() {
+      return { setCookie: setCookie, getCookie: getCookie };
+    })
+  }
 }));
