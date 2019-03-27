@@ -42,7 +42,7 @@
 
     function loadFlv()
     {
-      let url = document.getElementById("addr").value + ":8034/live/test.flv";
+      let url = "http://" + document.getElementById("addr").value + ":8034/live/test.flv";
       console.log("live url:" + url);
       if (player != null) {
         player.unload();
