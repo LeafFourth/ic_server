@@ -19,6 +19,7 @@
     video tag is not supported!
   </video> 
   <br />
+  <label for="addr">server addr(用点分形势):</label><input type="text" id="addr" value="45.77.127.100"></input>
   <button type="button" onclick="loadFlv()">load</button>
   <button type="button" onclick="play()">play</button>
   <button type="button" onclick="pause()">pause</button>
@@ -36,11 +37,13 @@
       withCredentials: false,
       hasAudio: true,
       hasVideo: true,
-      url: "http://shengchao:8034/live/test.flv"
+      url: "http://45.77.127.100:8034/live/test.flv"
     };
 
     function loadFlv()
     {
+      let url = document.getElementById("addr").value + ":8034/live/test.flv";
+      console.log("live url:" + url);
       if (player != null) {
         player.unload();
         player.detachMediaElement();
