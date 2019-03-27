@@ -18,9 +18,10 @@ import (
 func SetupServices() {
 	initServer();
 	var wg sync.WaitGroup;
-	wg.Add(2);
+	wg.Add(3);
 	go setupHttpService(&wg);
-	go setupLiveTcpService(&wg);
+	go setupRtmpService(&wg);
+	go setupFlvService(&wg);
 
 	wg.Wait();
 }
@@ -93,8 +94,6 @@ func globalHandle(w http.ResponseWriter, r *http.Request) {
 
 func setupHttpService(wg *sync.WaitGroup) {
   fmt.Println("setup http server");
-
-  
 	
 	err := http.ListenAndServe(":9090", nil);
   if err != nil {
@@ -104,7 +103,7 @@ func setupHttpService(wg *sync.WaitGroup) {
 	wg.Done();
 }
 
-func setupLiveTcpService(wg *sync.WaitGroup) {
+func setupRtmpService(wg *sync.WaitGroup) {
 	fmt.Println("setup live server");
 
 	bus, err := net.Listen("tcp", ":8033");
@@ -114,7 +113,22 @@ func setupLiveTcpService(wg *sync.WaitGroup) {
 		return;
 	}
 
-	live.SetupServer(bus);
+	live.SetupRtmpServer(bus);
+	
+  wg.Done();
+}
+
+func setupFlvService(wg *sync.WaitGroup) {
+	fmt.Println("setup httpflv server");
+
+	bus, err := net.Listen("tcp", ":8034");
+	
+	if err != nil {
+		fmt.Println(err);
+		return;
+	}
+
+	live.SetupFlvServer(bus);
 	
   wg.Done();
 }

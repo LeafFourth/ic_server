@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+
+<!--
+  测试：通过ffmpeg推流， ffmpeg -re -i local.flv -vcodec copy -acodec copy -f flv rtmp://shengchao.xyz:8033/live/test
+-->
+
+
+<html>
+<head>
+  <script src="../common/flv.js/flv.min.js"></script>
+
+  <title>flv-video</title>
+</head>
+<body>
+  <script>
+    //videojs.options.flash.swf = "swf/video-js.swf";
+  </script>
+  <video id="first-video" preload width="640" height="480">
+    video tag is not supported!
+  </video> 
+  <br />
+  <button type="button" onclick="loadFlv()">load</button>
+  <button type="button" onclick="play()">play</button>
+  <button type="button" onclick="pause()">pause</button>
+  <script type="text/javascript">
+    if (!flvjs.isSupported()) {
+      alert("flv not supported");
+    }
+    
+    console.log('isSupported: ' + flvjs.isSupported());
+
+    var player = null;
+    var playerSource = {
+      type: 'flv',
+      isLive: true,
+      withCredentials: false,
+      hasAudio: true,
+      hasVideo: true,
+      url: "http://shengchao:8034/live/test.flv"
+    };
+
+    function loadFlv()
+    {
+      if (player != null) {
+        player.unload();
+        player.detachMediaElement();
+        player.destroy();
+        player = null;
+      }
+
+      player = flvjs.createPlayer(playerSource, {
+          enableWorker: false,
+          lazyLoadMaxDuration: 3 * 60,
+          seekType: 'range',
+        });
+
+      player.attachMediaElement(document.getElementById("first-video"));
+      player.load();
+    }
+
+    function play()
+    {
+      player.play();
+    }
+
+    function pause()
+    {
+
+    }
+
+
+  </script>
+
+</body>
+</html>
